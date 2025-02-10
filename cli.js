@@ -19,7 +19,7 @@ program
 
     const network = await load(folder)
     const geojson = toGeojson(network)
-    const txt = JSON.stringify(geojson, null, 2)
+    const txt = JSON.stringify(geojson, null, null)
     console.log(txt)
   })
 

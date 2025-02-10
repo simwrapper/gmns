@@ -2,6 +2,7 @@ import Papa from '@simwrapper/papaparse'
 // import path from 'path'
 import upath from 'upath'
 import fs from 'fs'
+import { wktToGeoJSON } from '@terraformer/wkt'
 
 interface GMNSNetwork {
   path: string
@@ -16,16 +17,19 @@ interface Geojson {
 
 const loadCSV = async (network: GMNSNetwork, element: string): Promise<any[]> => {
   const fullPath = upath.joinSafe(network.path, `${element}.csv`)
-  const text = loadFileSync(fullPath)
 
-  const parsed = Papa.parse(text, {
-    delimitersToGuess: ['\t', ';', ',', ' '],
-    comments: '#',
-    skipEmptyLines: true,
-    dynamicTyping: true,
-    header: true,
-  })
-  return parsed.data
+  try {
+    const text = loadFileSync(fullPath)
+    const parsed = Papa.parse(text, {
+      delimitersToGuess: ['\t', ';', ',', ' '],
+      comments: '#',
+      skipEmptyLines: true,
+      dynamicTyping: true,
+      header: true,
+    })
+    return parsed.data
+  } catch {}
+  return []
 }
 
 function loadFileSync(filePath: string) {
@@ -52,32 +56,49 @@ export const load = async (path: string): Promise<GMNSNetwork> => {
 
   // get standard things
   network.config = (await loadCSV(network, 'config'))[0]
-  network.el.nodes = await loadCSV(network, 'node')
-  network.el.links = await loadCSV(network, 'link')
+  network.el.node = await loadCSV(network, 'node')
+  network.el.link = await loadCSV(network, 'link')
+  network.el.geometry = await loadCSV(network, 'geometry')
 
   return network
+}
+
+const generateGeometry = (geom: any) => {
+  return wktToGeoJSON(geom.geometry)
 }
 
 export const toGeojson = (network: GMNSNetwork) => {
   // build node coord lookup
   const nodeLookup = {} as any
-  for (const node of network.el.nodes) nodeLookup[node.node_id] = node
-
-  // create link geometry
+  for (const node of network.el.node) nodeLookup[node.node_id] = node
+  // build geometry lookup
+  const geomLookup = {} as any
+  if (network.el.geometry) {
+    for (const geom of network.el.geometry) geomLookup[geom.geometry_id] = geom
+  }
   const features = [] as any[]
-  for (const link of network.el.links) {
+  for (const link of network.el.link) {
     const nFrom = nodeLookup[link.from_node_id]
     const nTo = nodeLookup[link.to_node_id]
-    const feature = {
-      type: 'Feature',
-      id: link.link_id,
-      geometry: {
+
+    // create link geometry
+    let geometry
+    if (link.geometry_id in geomLookup) {
+      geometry = generateGeometry(geomLookup[link.geometry_id])
+    } else {
+      geometry = {
         type: 'LineString',
         coordinates: [
           [nFrom.x_coord, nFrom.y_coord],
           [nTo.x_coord, nTo.y_coord],
         ],
-      },
+      }
+    }
+
+    const feature = {
+      type: 'Feature',
+      id: link.link_id,
+      geometry,
       properties: link,
     }
     features.push(feature)
