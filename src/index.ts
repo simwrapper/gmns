@@ -1,8 +1,10 @@
 import Papa from '@simwrapper/papaparse'
-// import path from 'path'
 import upath from 'upath'
 import fs from 'fs'
 import { wktToGeoJSON } from '@terraformer/wkt'
+import { coordEach } from '@turf/meta'
+
+import Coords from './coords'
 
 interface GMNSNetwork {
   path: string
@@ -10,10 +12,10 @@ interface GMNSNetwork {
   el: { [table: string]: any[] }
 }
 
-interface Geojson {
-  type: string
-  features: any[]
-}
+// interface Geojson {
+//   type: string
+//   features: any[]
+// }
 
 const loadCSV = async (network: GMNSNetwork, element: string): Promise<any[]> => {
   const fullPath = upath.joinSafe(network.path, `${element}.csv`)
@@ -77,6 +79,10 @@ export const toGeojson = (network: GMNSNetwork) => {
     for (const geom of network.el.geometry) geomLookup[geom.geometry_id] = geom
   }
   const features = [] as any[]
+  const crs = Number.isFinite(network.config.crs)
+    ? `EPSG:${network.config.crs}`
+    : network.config.crs
+
   for (const link of network.el.link) {
     const nFrom = nodeLookup[link.from_node_id]
     const nTo = nodeLookup[link.to_node_id]
@@ -100,7 +106,20 @@ export const toGeojson = (network: GMNSNetwork) => {
       id: link.link_id,
       geometry,
       properties: link,
+    } as any
+
+    delete feature.properties.geometry
+
+    // convert coord to EPSG:4326 long/lat if necessary
+    if (crs !== 'EPSG:4326') {
+      coordEach(feature, currentCoord => {
+        let newCoord = Coords.toLngLat(crs, currentCoord)
+        // console.error(newCoord)
+        currentCoord[0] = newCoord[0]
+        currentCoord[1] = newCoord[1]
+      })
     }
+
     features.push(feature)
   }
 

@@ -7,6 +7,7 @@
     "modeling",
     "network"
   ],
+  "type": "module",
   "author": {
     "name": "Billy Charlton",
     "url": "https://github.com/billyc"
@@ -31,7 +32,6 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "type": "module",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@types/proj4": "^2.5.6",
     "@types/terraformer__wkt": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^8.23.0",
     "@typescript-eslint/parser": "^8.23.0",
@@ -59,12 +60,15 @@
     "dist"
   ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.6.0"
   },
   "dependencies": {
     "@simwrapper/papaparse": "^5.3.2-3",
     "@terraformer/wkt": "^2.2.1",
+    "@turf/meta": "^7.2.0",
     "commander": "^13.1.0",
+    "epsg-index": "^2.0.0",
+    "proj4": "^2.15.0",
     "upath": "^2.0.1"
   }
 }
