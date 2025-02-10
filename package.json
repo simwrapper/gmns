@@ -1,0 +1,32 @@
+{
+  "name": "@simwrapper/gmns",
+  "version": "0.1.0",
+  "description": "GMNS - General Modeling Network Specification parser",
+  "keywords": [
+    "gmns",
+    "parser",
+    "simwrapper",
+    "modeling",
+    "network"
+  ],
+  "homepage": "https://github.com/simwrapper/gmns.git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simwrapper/gmns.git"
+  },
+  "author": {
+    "name": "Billy Charlton",
+    "url": "https://github.com/billyc"
+  },
+  "license": "MIT",
+  "main": "gmns.js",
+  "browser": "gmns.js",
+  "devDependencies": {},
+  "scripts": {
+    "lint": "eslint --no-ignore papaparse.js Gruntfile.js .eslintrc.js 'tests/**/*.js'",
+    "test-browser": "node tests/test.js",
+    "test-mocha-headless-chrome": "node tests/test.js --mocha-headless-chrome",
+    "test-node": "mocha tests/node-tests.js tests/test-cases.js",
+    "test": "npm run lint && npm run test-node && npm run test-mocha-headless-chrome"
+  }
+}
