@@ -1,32 +1,60 @@
 {
   "name": "@simwrapper/gmns",
   "version": "0.1.0",
-  "description": "GMNS - General Modeling Network Specification parser",
   "keywords": [
     "gmns",
-    "parser",
     "simwrapper",
     "modeling",
     "network"
   ],
+  "author": {
+    "name": "Billy Charlton",
+    "url": "https://github.com/billyc"
+  },
   "homepage": "https://github.com/simwrapper/gmns.git",
   "repository": {
     "type": "git",
     "url": "https://github.com/simwrapper/gmns.git"
   },
-  "author": {
-    "name": "Billy Charlton",
-    "url": "https://github.com/billyc"
-  },
   "license": "MIT",
-  "main": "gmns.js",
-  "browser": "gmns.js",
-  "devDependencies": {},
   "scripts": {
-    "lint": "eslint --no-ignore papaparse.js Gruntfile.js .eslintrc.js 'tests/**/*.js'",
-    "test-browser": "node tests/test.js",
-    "test-mocha-headless-chrome": "node tests/test.js --mocha-headless-chrome",
-    "test-node": "mocha tests/node-tests.js tests/test-cases.js",
-    "test": "npm run lint && npm run test-node && npm run test-mocha-headless-chrome"
+    "build": "tsup src/index.ts --format cjs,esm --dts --sourcemap --clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint"
+  },
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@typescript-eslint/eslint-plugin": "^8.23.0",
+    "@typescript-eslint/parser": "^8.23.0",
+    "@vitest/coverage-v8": "^3.0.5",
+    "eslint": "^9.20.0",
+    "prettier": "^3.5.0",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.23.0",
+    "vitest": "^3.0.5"
+  },
+  "files": [
+    "src/index.ts",
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
