@@ -12,9 +12,35 @@ interface GMNSNetwork {
   t: { [table: string]: any[] }
 }
 
+export const load = async (path: string): Promise<GMNSNetwork> => {
+  // path can be a URI, a folder, a zipfile.
+  let folder = path
+  // user passed in actual csv file? back up to containing folder
+  if (path.toLocaleLowerCase().endsWith('.csv')) folder = upath.dirname(path)
+
+  const network: GMNSNetwork = {
+    path: folder,
+    config: {},
+    t: {},
+  }
+
+  // get config: if no config, default to long/lat
+  const config = await loadCSV(network, 'config')
+  if (config.length) network.config = config[0]
+  else network.config = { crs: 4326 }
+
+  // get standard things
+  network.t.node = await loadCSV(network, 'node')
+  network.t.link = await loadCSV(network, 'link')
+  network.t.geometry = await loadCSV(network, 'geometry')
+
+  return network
+}
+
 const loadCSV = async (network: GMNSNetwork, element: string): Promise<any[]> => {
   const fullPath = upath.joinSafe(network.path, `${element}.csv`)
 
+  console.error(`-- Loading ${fullPath}`)
   try {
     let text = loadFileSync(fullPath)
 
@@ -45,29 +71,6 @@ function loadFileSync(filePath: string) {
   }
 }
 
-export const load = async (path: string): Promise<GMNSNetwork> => {
-  // path can be a URI, a folder, a zipfile.
-
-  // for now: it's a folder
-  const network: GMNSNetwork = {
-    path,
-    config: {},
-    t: {},
-  }
-
-  // get config: if no config, default to long/lat
-  const config = await loadCSV(network, 'config')
-  if (config.length) network.config = config[0]
-  else network.config = { crs: 4326 }
-
-  // get standard things
-  network.t.node = await loadCSV(network, 'node')
-  network.t.link = await loadCSV(network, 'link')
-  network.t.geometry = await loadCSV(network, 'geometry')
-
-  return network
-}
-
 export const toGeojson = (network: GMNSNetwork) => {
   // build node coord lookup
   const nodeLookup = {} as any
@@ -80,7 +83,7 @@ export const toGeojson = (network: GMNSNetwork) => {
   // build geometry lookup
   const geomLookup = {} as any
   if (network.t.geometry.length) {
-    console.error('doing the geoms')
+    console.error('-- Appending geometries')
     for (const geom of network.t.geometry) geomLookup[geom.geometry_id] = geom
   }
 
@@ -97,8 +100,9 @@ export const toGeojson = (network: GMNSNetwork) => {
 
       // create link geometry
       let geometry
-      if (link.geometry_id && link.geometry_id in geomLookup) {
-        geometry = wktToGeoJSON(geomLookup[link.geometry_id])
+      const wkt = geomLookup[link.geometry_id]
+      if (wkt?.geometry) {
+        geometry = wktToGeoJSON(wkt.geometry)
       } else {
         geometry = {
           type: 'LineString',
