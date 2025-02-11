@@ -1,6 +1,6 @@
+import fs from 'fs'
 import Papa from '@simwrapper/papaparse'
 import upath from 'upath'
-import fs from 'fs'
 import { wktToGeoJSON } from '@terraformer/wkt'
 import { coordEach } from '@turf/meta'
 
@@ -9,13 +9,8 @@ import Coords from './coords'
 interface GMNSNetwork {
   path: string
   config: any
-  el: { [table: string]: any[] }
+  t: { [table: string]: any[] }
 }
-
-// interface Geojson {
-//   type: string
-//   features: any[]
-// }
 
 const loadCSV = async (network: GMNSNetwork, element: string): Promise<any[]> => {
   const fullPath = upath.joinSafe(network.path, `${element}.csv`)
@@ -57,7 +52,7 @@ export const load = async (path: string): Promise<GMNSNetwork> => {
   const network: GMNSNetwork = {
     path,
     config: {},
-    el: {},
+    t: {},
   }
 
   // get config: if no config, default to long/lat
@@ -66,9 +61,9 @@ export const load = async (path: string): Promise<GMNSNetwork> => {
   else network.config = { crs: 4326 }
 
   // get standard things
-  network.el.node = await loadCSV(network, 'node')
-  network.el.link = await loadCSV(network, 'link')
-  network.el.geometry = await loadCSV(network, 'geometry')
+  network.t.node = await loadCSV(network, 'node')
+  network.t.link = await loadCSV(network, 'link')
+  network.t.geometry = await loadCSV(network, 'geometry')
 
   return network
 }
@@ -76,7 +71,7 @@ export const load = async (path: string): Promise<GMNSNetwork> => {
 export const toGeojson = (network: GMNSNetwork) => {
   // build node coord lookup
   const nodeLookup = {} as any
-  for (const node of network.el.node) {
+  for (const node of network.t.node) {
     // this trim is required because BOM at filestart will break first column name
     nodeLookup[node.node_id] = node
   }
@@ -84,9 +79,9 @@ export const toGeojson = (network: GMNSNetwork) => {
 
   // build geometry lookup
   const geomLookup = {} as any
-  if (network.el.geometry.length) {
+  if (network.t.geometry.length) {
     console.error('doing the geoms')
-    for (const geom of network.el.geometry) geomLookup[geom.geometry_id] = geom
+    for (const geom of network.t.geometry) geomLookup[geom.geometry_id] = geom
   }
 
   const features = [] as any[]
@@ -94,11 +89,11 @@ export const toGeojson = (network: GMNSNetwork) => {
     ? `EPSG:${network.config.crs}`
     : network.config.crs
 
-  for (const link of network.el.link) {
+  for (const link of network.t.link) {
     try {
       const nFrom = nodeLookup[link.from_node_id]
       const nTo = nodeLookup[link.to_node_id]
-      // console.error({ nFrom, nTo, linkFrom: link.from_node_id, linkTo: link.to_node_id })
+      if (!nFrom || !nTo) throw Error('Missing node, from_node_id, or to_node_id')
 
       // create link geometry
       let geometry
@@ -134,7 +129,7 @@ export const toGeojson = (network: GMNSNetwork) => {
       }
       features.push(feature)
     } catch (e) {
-      console.error(`Error processing Link id ${link.link_id}`)
+      console.error(`Link ${link.link_id}: ` + e)
     }
   }
 
