@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@types/jszip": "^3.4.0",
     "@types/proj4": "^2.5.6",
     "@types/terraformer__wkt": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^8.23.0",
@@ -68,6 +69,7 @@
     "@turf/meta": "^7.2.0",
     "commander": "^13.1.0",
     "epsg-index": "^2.0.0",
+    "jszip": "^3.10.1",
     "proj4": "^2.15.0",
     "upath": "^2.0.1"
   }

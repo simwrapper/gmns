@@ -3,6 +3,7 @@ import Papa from '@simwrapper/papaparse'
 import upath from 'upath'
 import { wktToGeoJSON } from '@terraformer/wkt'
 import { coordEach } from '@turf/meta'
+import JSZIP from 'jszip'
 
 import Coords from './coords'
 
@@ -14,10 +15,20 @@ interface GMNSNetwork {
 
 export const load = async (path: string): Promise<GMNSNetwork> => {
   // path can be a URI, a folder, a zipfile.
+
+  // is it a zip file
+  if (path.toLocaleLowerCase().endsWith('.zip')) {
+    return await loadFromZipFile(path)
+  }
+
   let folder = path
-  // user passed in actual csv file? back up to containing folder
+  // did use pass in actual csv file? back up to containing folder
   if (path.toLocaleLowerCase().endsWith('.csv')) folder = upath.dirname(path)
 
+  return await loadFromFolder(folder)
+}
+
+const loadFromFolder = async (folder: string): Promise<GMNSNetwork> => {
   const network: GMNSNetwork = {
     path: folder,
     config: {},
@@ -35,6 +46,47 @@ export const load = async (path: string): Promise<GMNSNetwork> => {
   network.t.geometry = await loadCSV(network, 'geometry')
 
   return network
+}
+
+const loadFromZipFile = async (path: string): Promise<GMNSNetwork> => {
+  const network: GMNSNetwork = {
+    path,
+    config: {},
+    t: {},
+  }
+
+  const buffer = fs.readFileSync(path)
+  const u8 = new Uint8Array(buffer)
+  const zip = await JSZIP.loadAsync(u8)
+  console.error({ files: Object.keys(zip.files) })
+
+  // get config.csv if it exists
+  const config = await loadCSVFromZip(zip, 'config')
+  if (config.length) network.config = config[0]
+  else network.config = { crs: 4326 }
+
+  // get standard things
+  network.t.node = await loadCSVFromZip(zip, 'node')
+  network.t.link = await loadCSVFromZip(zip, 'link')
+  network.t.geometry = await loadCSVFromZip(zip, 'geometry')
+
+  return network
+}
+
+const loadCSVFromZip = async (zip: JSZIP, element: string): Promise<any[]> => {
+  try {
+    const regex = new RegExp(`${element}\.csv$`)
+    const content = await zip.file(regex)[0].async('string')
+    const parsed = Papa.parse(content, {
+      delimitersToGuess: [',', '\t', ';', ' '],
+      comments: '#',
+      skipEmptyLines: true,
+      dynamicTyping: true,
+      header: true,
+    })
+    return parsed.data
+  } catch (e) {}
+  return []
 }
 
 const loadCSV = async (network: GMNSNetwork, element: string): Promise<any[]> => {
@@ -78,7 +130,6 @@ export const toGeojson = (network: GMNSNetwork) => {
     // this trim is required because BOM at filestart will break first column name
     nodeLookup[node.node_id] = node
   }
-  // console.error(111, nodeLookup)
 
   // build geometry lookup
   const geomLookup = {} as any
