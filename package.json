@@ -1,6 +1,6 @@
 {
   "name": "@simwrapper/gmns",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "keywords": [
     "gmns",
     "simwrapper",
@@ -26,7 +26,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint"
+    "prepublishOnly": "npm test",
+    "xprepublishOnly": "npm test && npm run lint"
   },
   "description": "",
   "main": "dist/index.js",

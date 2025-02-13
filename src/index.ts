@@ -75,7 +75,7 @@ const loadFromZipFile = async (path: string): Promise<GMNSNetwork> => {
 
 const loadCSVFromZip = async (zip: JSZIP, element: string): Promise<any[]> => {
   try {
-    const regex = new RegExp(`${element}\.csv$`)
+    const regex = new RegExp(`${element}.csv$`)
     const content = await zip.file(regex)[0].async('string')
     const parsed = Papa.parse(content, {
       delimitersToGuess: [',', '\t', ';', ' '],

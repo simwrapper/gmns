@@ -12,7 +12,7 @@ program
   .description('Read GMNS network and output as Geojson format')
   .argument('<folder>', 'path to folder containing config.csv')
   // .option('-u, --uppercase', 'convert to uppercase')
-  .action(async (folder, options) => {
+  .action(async folder => {
     let message = `Reading GMNS from ${folder}`
     // if (options.uppercase) message = message.toUpperCase()
     console.error(message)
