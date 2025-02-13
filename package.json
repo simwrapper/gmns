@@ -1,6 +1,7 @@
 {
   "name": "@simwrapper/gmns",
   "version": "0.1.1",
+  "private": false,
   "keywords": [
     "gmns",
     "simwrapper",
@@ -15,7 +16,7 @@
   "homepage": "https://github.com/simwrapper/gmns.git",
   "repository": {
     "type": "git",
-    "url": "https://github.com/simwrapper/gmns.git"
+    "url": "git+https://github.com/simwrapper/gmns.git"
   },
   "license": "MIT",
   "scripts": {
