@@ -1,6 +1,5 @@
 import fs from 'fs'
 import Papa from '@simwrapper/papaparse'
-import upath from 'upath'
 import { wktToGeoJSON } from '@terraformer/wkt'
 import { coordEach } from '@turf/meta'
 import JSZIP from 'jszip'
@@ -13,8 +12,13 @@ interface GMNSNetwork {
   t: { [table: string]: any[] }
 }
 
-export const load = async (path: string): Promise<GMNSNetwork> => {
-  // path can be a URI, a folder, a zipfile.
+export const load = async (path: string, blob?: Blob): Promise<GMNSNetwork> => {
+  // input can be a Blob, a URI, a folder, a zipfile.
+
+  // is it a Blob
+  if (blob) {
+    return await loadFromZipFile(path, blob)
+  }
 
   // is it a zip file
   if (path.toLocaleLowerCase().endsWith('.zip')) {
@@ -23,9 +27,20 @@ export const load = async (path: string): Promise<GMNSNetwork> => {
 
   let folder = path
   // did use pass in actual csv file? back up to containing folder
-  if (path.toLocaleLowerCase().endsWith('.csv')) folder = upath.dirname(path)
+  if (path.toLocaleLowerCase().endsWith('.csv')) {
+    folder = path.slice(0, path.lastIndexOf('/'))
+  }
 
-  return await loadFromFolder(folder)
+  return await loadFromFolder(path)
+}
+
+const loadFromBlob = async (path: string, blob: Blob) => {
+  const network: GMNSNetwork = {
+    path,
+    config: {},
+    t: {},
+  }
+  return network
 }
 
 const loadFromFolder = async (folder: string): Promise<GMNSNetwork> => {
@@ -48,17 +63,22 @@ const loadFromFolder = async (folder: string): Promise<GMNSNetwork> => {
   return network
 }
 
-const loadFromZipFile = async (path: string): Promise<GMNSNetwork> => {
+const loadFromZipFile = async (path: string, blob?: Blob): Promise<GMNSNetwork> => {
   const network: GMNSNetwork = {
     path,
     config: {},
     t: {},
   }
 
-  const buffer = fs.readFileSync(path)
-  const u8 = new Uint8Array(buffer)
-  const zip = await JSZIP.loadAsync(u8)
-  console.error({ files: Object.keys(zip.files) })
+  let zip
+
+  if (blob) {
+    zip = await JSZIP.loadAsync(blob)
+  } else {
+    const buffer = fs.readFileSync(path)
+    const u8 = new Uint8Array(buffer)
+    zip = await JSZIP.loadAsync(u8)
+  }
 
   // get config.csv if it exists
   const config = await loadCSVFromZip(zip, 'config')
@@ -90,9 +110,9 @@ const loadCSVFromZip = async (zip: JSZIP, element: string): Promise<any[]> => {
 }
 
 const loadCSV = async (network: GMNSNetwork, element: string): Promise<any[]> => {
-  const fullPath = upath.joinSafe(network.path, `${element}.csv`)
+  const fullPath = network.path + `${element}.csv`
 
-  console.error(`-- Loading ${fullPath}`)
+  // console.error(`-- Loading ${fullPath}`)
   try {
     let text = loadFileSync(fullPath)
 
@@ -113,8 +133,7 @@ const loadCSV = async (network: GMNSNetwork, element: string): Promise<any[]> =>
 
 function loadFileSync(filePath: string) {
   try {
-    const fullPath = upath.resolve(filePath)
-    return fs.readFileSync(fullPath, 'utf8')
+    return fs.readFileSync(filePath, 'utf8')
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       throw new Error(`File not found: ${filePath}`)
@@ -134,7 +153,7 @@ export const toGeojson = (network: GMNSNetwork) => {
   // build geometry lookup
   const geomLookup = {} as any
   if (network.t.geometry.length) {
-    console.error('-- Appending geometries')
+    // console.error('-- Appending geometries')
     for (const geom of network.t.geometry) geomLookup[geom.geometry_id] = geom
   }
 
@@ -177,7 +196,6 @@ export const toGeojson = (network: GMNSNetwork) => {
       if (crs !== 'EPSG:4326') {
         coordEach(feature, currentCoord => {
           let newCoord = Coords.toLngLat(crs, currentCoord)
-          // console.error(newCoord)
           currentCoord[0] = newCoord[0]
           currentCoord[1] = newCoord[1]
         })
@@ -198,4 +216,4 @@ export const greet = (name: string): string => {
   return `Hello, ${name}!`
 }
 
-export default { toGeojson }
+export default { load, toGeojson }

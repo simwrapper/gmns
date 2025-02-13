@@ -1,30 +1,65 @@
 # GMNS
 
-Description of your package
+GMNS is the "General Modeling Network Specification."
+
+This is a JavaScript/TypeScript implementation of a GMNS reader. Current features:
+
+Loading GMNS networks:
+
+- from a .zipfile containing all GMNS tables
+- from a folder containing the raw .csv tables
+
+Converting GMNS to:
+
+- GeoJSON format
+
+GMNS itself is being developed here:
+
+- <https://zephyr-data-specs.github.io/GMNS/>
+
+and is supported by the [Zephyr Transport Foundation](https://zephyrtransport.org)
 
 ## Installation
 
 ```bash
-npm install your-package-name
+npm install @simwrapper/gmns
 ```
 
 ## Usage
 
 ```typescript
 // ESM
-import { greet } from 'your-package-name'
+import GMNS from '@simwrapper/gmns'
 
 // CommonJS
-const { greet } = require('your-package-name')
+const GMNS = require('@simwrapper/gmns')
 
-console.log(greet('World')) // Output: Hello, World!
+const network = GMNS.load('mynetwork.gmns.zip')
+const geojson = GMNS.toGeojson(network)
+console.log(geojson) // Output: { "type": "FeatureCollection", "features": [...]}
 ```
 
 ## API Documentation
 
-### greet(name: string): string
+### load(path: string, Blob?: blob)
 
-Returns a greeting message with the provided name.
+Load a GMNS file from a path or from an already-loaded Blob object.
+
+Returns a **GMNSNetwork** object, which contains
+
+- `path` the file path from which the network was loaded
+- `config` parameters loaded from config.csv
+- `t` object which contains all of the .csv **tables** that were found in the zip file or folder.
+
+Parameters:
+
+**path** Required. can be a valid .zip file, a valid folder path containing the various CSV files, or _sometimes_ a path directly to the GMNS `config.csv` file itself (but this only works with certain web servers)
+
+**blob** Optional. Pass in a Blob object with the already-loaded .zip file and this will be used directly instead of loading from the net or disk.
+
+### toGeojson(GMNS: GMNSNetwork)
+
+Returns a GeoJSON-compatible object with the network content. Currently only the nodes and link tables are read, and optionally if a `geometry` table exists, then the link geometries will also be present.
 
 ## License
 
