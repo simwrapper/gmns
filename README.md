@@ -19,7 +19,17 @@ GMNS itself is being developed here:
 
 and is supported by the [Zephyr Transport Foundation](https://zephyrtransport.org)
 
-## Installation
+
+### Converting MATSim networks to GMNS
+
+As a courtesy, this package also contains a Python script which converts a MATSIM network.xml file
+into GMNS format. Run
+
+- `python3 create-gmns-network.py` 
+
+to convert your network to a zipped GMNS network file.
+
+## Installation of NPM package
 
 ```bash
 npm install @simwrapper/gmns
