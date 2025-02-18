@@ -12,12 +12,12 @@ interface GMNSNetwork {
   t: { [table: string]: any[] }
 }
 
-export const load = async (path: string, blob?: Blob): Promise<GMNSNetwork> => {
-  // input can be a Blob, a URI, a folder, a zipfile.
+export const load = async (path: string, data?: any): Promise<GMNSNetwork> => {
+  // input can be a ArrayBuffer, Blob, a URI, a folder, a zipfile.
 
   // is it a Blob
-  if (blob) {
-    return await loadFromZipFile(path, blob)
+  if (data) {
+    return await loadFromZipFile(path, data)
   }
 
   // is it a zip file
@@ -32,15 +32,6 @@ export const load = async (path: string, blob?: Blob): Promise<GMNSNetwork> => {
   }
 
   return await loadFromFolder(path)
-}
-
-const loadFromBlob = async (path: string, blob: Blob) => {
-  const network: GMNSNetwork = {
-    path,
-    config: {},
-    t: {},
-  }
-  return network
 }
 
 const loadFromFolder = async (folder: string): Promise<GMNSNetwork> => {
@@ -63,7 +54,13 @@ const loadFromFolder = async (folder: string): Promise<GMNSNetwork> => {
   return network
 }
 
-const loadFromZipFile = async (path: string, blob?: Blob): Promise<GMNSNetwork> => {
+/**
+ *
+ * @param path filePath
+ * @param data can be any of String/Array of bytes/ArrayBuffer/Uint8Array/Buffer/Blob/Promise
+ * @returns
+ */
+const loadFromZipFile = async (path: string, data?: any): Promise<GMNSNetwork> => {
   const network: GMNSNetwork = {
     path,
     config: {},
@@ -72,8 +69,8 @@ const loadFromZipFile = async (path: string, blob?: Blob): Promise<GMNSNetwork> 
 
   let zip
 
-  if (blob) {
-    zip = await JSZIP.loadAsync(blob)
+  if (data) {
+    zip = await JSZIP.loadAsync(data)
   } else {
     const buffer = fs.readFileSync(path)
     const u8 = new Uint8Array(buffer)
