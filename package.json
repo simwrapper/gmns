@@ -1,7 +1,7 @@
 {
   "name": "@simwrapper/gmns",
   "description": "GMNS: the General Modeling Network Specification. Load GMNS networks from cmdline or in the browser. Converts GMNS to GeoJSON.",
-  "version": "0.1.3",
+  "version": "v0.1.4",
   "private": false,
   "keywords": [
     "gmns",
